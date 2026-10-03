@@ -1,7 +1,6 @@
 export interface SocialLink {
   platform: string;
   url: string;
-  icon: string;
   label: string;
 }
 
@@ -12,74 +11,76 @@ export interface LinkCardItem {
   url: string;
   icon: string;
   badge?: string;
-  badgeColor?: "primary" | "success" | "warning" | "hot";
   highlight?: boolean;
   image?: string;
+  category?: string;
+}
+
+export interface StatItem {
+  label: string;
+  value: string;
+  unit?: string;
 }
 
 export interface ProfileData {
   name: string;
+  handle: string;
   role: string;
   bio: string;
   avatarUrl: string;
-  coverImageUrl?: string;
-  status: {
-    isAvailable: boolean;
-    text: string;
-  };
+  statusText: string;
+  isAvailable: boolean;
   location: string;
+  stats: StatItem[];
   tags: string[];
   socials: SocialLink[];
   links: LinkCardItem[];
 }
 
 export const profileData: ProfileData = {
-  name: "이지훈 (Alex Lee)",
-  role: "Full-Stack Developer & UI Designer",
-  bio: "사용자 중심의 가치를 만드는 개발자입니다. 모던 웹 기술과 인터랙티브한 디자인을 사랑합니다 ✨",
+  name: "이지훈",
+  handle: "@alex_lee",
+  role: "풀스택 프로덕트 엔지니어",
+  bio: "사용자가 체감하는 가치와 직관적인 인터페이스를 만들어요. 복잡한 문제를 단순하고 읽기 쉬운 코드로 해결하는 과정을 좋아해요.",
   avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&h=400&q=80",
-  coverImageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&h=400&q=80",
-  status: {
-    isAvailable: true,
-    text: "새로운 프로젝트 및 커피챗 환영 ☕",
-  },
-  location: "Seoul, South Korea",
+  statusText: "새로운 협업 및 커피챗 열려있어요",
+  isAvailable: true,
+  location: "서울시 강남구",
+  stats: [
+    { label: "출시 프로덕트", value: "14", unit: "개" },
+    { label: "개발 경력", value: "4", unit: "년차" },
+    { label: "오픈소스 스타", value: "1,240", unit: "개" },
+  ],
   tags: ["Next.js", "TypeScript", "React", "Tailwind CSS", "UI/UX", "Node.js"],
   socials: [
     {
       platform: "github",
       url: "https://github.com",
-      icon: "Github",
       label: "GitHub",
     },
     {
       platform: "instagram",
       url: "https://instagram.com",
-      icon: "Instagram",
       label: "Instagram",
     },
     {
       platform: "linkedin",
       url: "https://linkedin.com",
-      icon: "Linkedin",
       label: "LinkedIn",
     },
     {
       platform: "twitter",
       url: "https://x.com",
-      icon: "Twitter",
       label: "X (Twitter)",
     },
     {
       platform: "youtube",
       url: "https://youtube.com",
-      icon: "Youtube",
       label: "YouTube",
     },
     {
       platform: "mail",
       url: "mailto:alex.lee.dev@example.com",
-      icon: "Mail",
       label: "Email",
     },
   ],
@@ -87,45 +88,41 @@ export const profileData: ProfileData = {
     {
       id: "portfolio",
       title: "2026 포트폴리오 웹사이트",
-      description: "최신 프로젝트와 인터랙티브 인터페이스를 확인해보세요",
+      description: "인터랙티브 웹 프로젝트와 최신 작업물을 한눈에 살펴보세요",
       url: "https://example.com/portfolio",
       icon: "Sparkles",
-      badge: "NEW",
-      badgeColor: "primary",
+      badge: "대표 프로젝트",
       highlight: true,
-      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&h=200&q=80",
-    },
-    {
-      id: "blog",
-      title: "개발 기술 블로그 (Tech Log)",
-      description: "프론트엔드 최적화 및 풀스택 개발 아티클을 연재합니다",
-      url: "https://example.com/blog",
-      icon: "BookOpen",
-      badge: "주간 연재",
-      badgeColor: "success",
+      image: "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=600&h=240&q=80",
     },
     {
       id: "projects",
-      title: "오픈소스 & 사이드 프로젝트 모음",
-      description: "GitHub 스타 1,000+ 프로젝트 및 라이브러리 쇼케이스",
+      title: "오픈소스 & 깃허브 저장소",
+      description: "누구나 바로 쓸 수 있는 프론트엔드 유틸리티와 스타터 킷이에요",
       url: "https://github.com",
       icon: "FolderGit2",
-      badge: "HOT 🔥",
-      badgeColor: "hot",
+      badge: "인기",
+    },
+    {
+      id: "blog",
+      title: "기술 블로그 (Tech Log)",
+      description: "프론트엔드 아키텍처와 성능 최적화 경험을 기록해요",
+      url: "https://example.com/blog",
+      icon: "BookOpen",
+      badge: "매주 연재",
     },
     {
       id: "coffee-chat",
-      title: "1:1 커피챗 & 멘토링 예약",
-      description: "커리어 상담, 기술 스택 고민, 사이드 프로젝트 협업 문의",
+      title: "1:1 커피챗 예약하기",
+      description: "커리어 고민, 기술 이야기, 사이드 프로젝트 아이디어를 편하게 나눠요",
       url: "https://calendly.com",
       icon: "Coffee",
       badge: "예약 가능",
-      badgeColor: "primary",
     },
     {
       id: "newsletter",
-      title: "주간 프론트엔드 뉴스레터 구독",
-      description: "매주 월요일 아침 최신 웹 트렌드와 디자인 인사이트를 전해드립니다",
+      title: "주간 프론트엔드 뉴스레터",
+      description: "매주 월요일 아침 유익한 웹 기술 소식을 메일로 전해드려요",
       url: "https://example.com/newsletter",
       icon: "Send",
     },

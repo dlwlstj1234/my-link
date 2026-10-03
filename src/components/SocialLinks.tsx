@@ -8,7 +8,6 @@ interface SocialLinksProps {
   socials: SocialLink[];
 }
 
-// Pixel-perfect SVG brand icons
 const GithubIcon = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
     <path
@@ -46,23 +45,23 @@ const YoutubeIcon = ({ className }: { className?: string }) => (
 );
 
 const iconMap: Record<string, React.ReactNode> = {
-  github: <GithubIcon className="w-5 h-5" />,
-  instagram: <InstagramIcon className="w-5 h-5" />,
-  linkedin: <LinkedinIcon className="w-5 h-5" />,
-  twitter: <TwitterXIcon className="w-5 h-5" />,
-  x: <TwitterXIcon className="w-5 h-5" />,
-  youtube: <YoutubeIcon className="w-5 h-5" />,
-  mail: <Mail className="w-5 h-5" />,
-  globe: <Globe className="w-5 h-5" />,
-  discord: <MessageCircle className="w-5 h-5" />,
+  github: <GithubIcon className="w-[18px] h-[18px]" />,
+  instagram: <InstagramIcon className="w-[18px] h-[18px]" />,
+  linkedin: <LinkedinIcon className="w-[18px] h-[18px]" />,
+  twitter: <TwitterXIcon className="w-[18px] h-[18px]" />,
+  x: <TwitterXIcon className="w-[18px] h-[18px]" />,
+  youtube: <YoutubeIcon className="w-[18px] h-[18px]" />,
+  mail: <Mail className="w-[18px] h-[18px] stroke-[2]" />,
+  globe: <Globe className="w-[18px] h-[18px] stroke-[2]" />,
+  discord: <MessageCircle className="w-[18px] h-[18px] stroke-[2]" />,
 };
 
 export default function SocialLinks({ socials }: SocialLinksProps) {
   return (
-    <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3 py-2">
+    <div className="flex items-center justify-center gap-2 py-1">
       {socials.map((social) => {
         const iconKey = social.platform.toLowerCase();
-        const icon = iconMap[iconKey] || <Globe className="w-5 h-5" />;
+        const icon = iconMap[iconKey] || <Globe className="w-[18px] h-[18px]" />;
 
         return (
           <a
@@ -71,7 +70,7 @@ export default function SocialLinks({ socials }: SocialLinksProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={social.label}
-            className="group relative p-3 rounded-2xl bg-white/70 dark:bg-zinc-800/60 backdrop-blur-md border border-zinc-200/80 dark:border-zinc-700/60 text-zinc-700 dark:text-zinc-300 hover:text-indigo-600 dark:hover:text-indigo-400 hover:bg-white dark:hover:bg-zinc-800 hover:scale-110 hover:shadow-lg hover:shadow-indigo-500/10 active:scale-95 transition-all duration-200"
+            className="w-11 h-11 rounded-full bg-[#F2F4F6] text-[#4E5968] hover:bg-[#E5E8EB] hover:text-[#191F28] active:bg-[#D1D6DB] flex items-center justify-center tds-press transition-colors"
           >
             {icon}
             <span className="sr-only">{social.label}</span>

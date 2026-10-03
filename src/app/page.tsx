@@ -6,7 +6,7 @@ import SocialLinks from "@/components/SocialLinks";
 import LinkItem from "@/components/LinkItem";
 import Toast from "@/components/Toast";
 import { profileData } from "@/data/profile";
-import { Link2, Heart } from "lucide-react";
+import { Share2, Sparkles } from "lucide-react";
 
 export default function Home() {
   const [toastMessage, setToastMessage] = useState("");
@@ -17,62 +17,102 @@ export default function Home() {
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(url);
-        setToastMessage("프로필 링크가 클립보드에 복사되었습니다! 🎉");
+        setToastMessage("프로필 링크가 복사되었어요");
       } else {
         setToastMessage("링크: " + url);
       }
       setShowToast(true);
     } catch {
-      setToastMessage("링크 복사에 성공했습니다!");
+      setToastMessage("프로필 링크가 복사되었어요");
       setShowToast(true);
     }
   };
 
   return (
-    <div className="relative min-h-screen w-full bg-gradient-to-b from-slate-50 via-zinc-100 to-slate-200 dark:from-zinc-950 dark:via-zinc-900 dark:to-zinc-950 text-zinc-900 dark:text-zinc-100 flex flex-col items-center justify-between p-4 sm:p-6 md:p-8 overflow-x-hidden selection:bg-indigo-500 selection:text-white">
-      {/* Decorative Ambient Background Glows */}
-      <div className="fixed top-0 left-1/2 -translate-x-1/2 w-full max-w-4xl h-96 bg-gradient-to-tr from-indigo-500/15 via-purple-500/15 to-pink-500/15 rounded-full blur-3xl pointer-events-none -z-10" />
-      <div className="fixed bottom-0 right-1/4 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none -z-10" />
+    <div className="relative min-h-screen w-full bg-[#F2F4F6] text-[#191F28] flex flex-col items-center">
+      {/* Top App Bar (56pt standard) */}
+      <header className="sticky top-0 z-30 w-full max-w-[460px] h-[56px] px-5 flex items-center justify-between bg-[#F2F4F6]/90 backdrop-blur-md">
+        <div className="flex items-center gap-2">
+          <span className="text-[17px] font-bold text-[#191F28] tracking-tight">
+            마이링크
+          </span>
+        </div>
+        <button
+          onClick={handleShare}
+          className="w-10 h-10 rounded-full flex items-center justify-center text-[#4E5968] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] tds-press transition-colors cursor-pointer"
+          aria-label="프로필 링크 복사하기"
+        >
+          <Share2 className="w-5 h-5 stroke-[2]" />
+        </button>
+      </header>
 
-      {/* Main Responsive Content Wrapper */}
-      <main className="w-full max-w-lg sm:max-w-xl flex flex-col gap-6 items-center">
-        {/* Profile Card Header */}
-        <ProfileCard profile={profileData} onShare={handleShare} />
+      {/* Main Content Area */}
+      <main className="w-full max-w-[460px] px-4 sm:px-5 pb-32 flex flex-col gap-4">
+        {/* Profile Card */}
+        <ProfileCard profile={profileData} />
 
-        {/* Social Media Links Bar */}
-        <div className="w-full">
+        {/* Social Links Row */}
+        <div className="w-full py-1">
           <SocialLinks socials={profileData.socials} />
         </div>
 
-        {/* Links Section Divider */}
-        <div className="w-full flex items-center gap-3 pt-2 pb-1">
-          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
-          <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/60 dark:bg-zinc-800/60 backdrop-blur-md border border-zinc-200/60 dark:border-zinc-700/60 text-xs font-semibold text-zinc-600 dark:text-zinc-400">
-            <Link2 className="w-3.5 h-3.5 text-indigo-500" />
-            <span>주요 링크 & 포트폴리오</span>
-          </div>
-          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-zinc-300 dark:via-zinc-700 to-transparent" />
+        {/* Section Header */}
+        <div className="flex items-center justify-between px-1 pt-3 pb-1">
+          <h2 className="text-[18px] font-bold text-[#191F28] tracking-tight">
+            주요 프로젝트와 링크
+          </h2>
+          <span className="text-[13px] font-medium text-[#8B95A1]">
+            {profileData.links.length}개
+          </span>
         </div>
 
-        {/* Links Cards List */}
-        <section className="w-full flex flex-col gap-3.5 sm:gap-4">
+        {/* Links List */}
+        <section className="flex flex-col gap-2.5 w-full">
           {profileData.links.map((link) => (
             <LinkItem key={link.id} link={link} />
           ))}
         </section>
+
+        {/* Contact Banner Card */}
+        <div className="w-full bg-white rounded-[20px] border border-[#E5E8EB]/70 p-5 shadow-tds-card flex items-center justify-between gap-3 mt-1">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-10 h-10 rounded-full bg-[#E8F3FF] text-[#3182F6] flex items-center justify-center shrink-0">
+              <Sparkles className="w-5 h-5" />
+            </div>
+            <div className="min-w-0">
+              <h3 className="text-[15px] font-semibold text-[#191F28] truncate">
+                협업이나 문의가 있으신가요?
+              </h3>
+              <p className="text-[13px] text-[#8B95A1] truncate">
+                언제든지 편하게 메일을 남겨주세요
+              </p>
+            </div>
+          </div>
+          <a
+            href="mailto:alex.lee.dev@example.com"
+            className="h-9 px-3.5 rounded-[10px] bg-[#F2F4F6] text-[#191F28] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] text-[13px] font-semibold flex items-center justify-center shrink-0 tds-press transition-colors"
+          >
+            메일 보내기
+          </a>
+        </div>
+
+        {/* Footer */}
+        <footer className="text-center pt-8 pb-4 text-[12px] text-[#8B95A1]">
+          <p>© {new Date().getFullYear()} {profileData.name} · My Link</p>
+        </footer>
       </main>
 
-      {/* Footer */}
-      <footer className="w-full max-w-lg text-center pt-10 pb-4 text-xs text-zinc-500 dark:text-zinc-400 flex flex-col items-center gap-2">
-        <div className="flex items-center gap-1">
-          <span>Crafted with</span>
-          <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 inline animate-pulse" />
-          <span>using <strong className="font-semibold text-zinc-700 dark:text-zinc-300">My Link</strong></span>
+      {/* Bottom CTA (56pt single primary action with protective gradient) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none">
+        <div className="w-full max-w-[460px] px-4 pb-5 pt-6 bg-gradient-to-t from-[#F2F4F6] via-[#F2F4F6]/95 to-transparent pointer-events-auto">
+          <button
+            onClick={handleShare}
+            className="w-full h-[56px] rounded-[16px] bg-[#3182F6] text-white text-[17px] font-bold shadow-tds-cta hover:bg-[#2B72D6] active:bg-[#1B64CE] tds-press transition-all cursor-pointer flex items-center justify-center gap-2"
+          >
+            <span>프로필 링크 복사하기</span>
+          </button>
         </div>
-        <p className="text-zinc-400 dark:text-zinc-600 text-[11px]">
-          © {new Date().getFullYear()} {profileData.name}. All rights reserved.
-        </p>
-      </footer>
+      </div>
 
       {/* Toast Notification */}
       <Toast
