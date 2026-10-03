@@ -5,10 +5,11 @@ import ProfileCard from "@/components/ProfileCard";
 import SocialLinks from "@/components/SocialLinks";
 import LinkItem from "@/components/LinkItem";
 import Toast from "@/components/Toast";
-import { profileData } from "@/data/profile";
+import { useHydratedProfile } from "@/hooks/useHydratedProfile";
 import { Share2, Sparkles } from "lucide-react";
 
 export default function Home() {
+  const { profile } = useHydratedProfile();
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
@@ -49,11 +50,11 @@ export default function Home() {
       {/* Main Content Area */}
       <main className="w-full max-w-[460px] px-4 sm:px-5 pb-32 flex flex-col gap-4">
         {/* Profile Card */}
-        <ProfileCard profile={profileData} />
+        <ProfileCard profile={profile} />
 
         {/* Social Links Row */}
         <div className="w-full py-1">
-          <SocialLinks socials={profileData.socials} />
+          <SocialLinks socials={profile.socials} />
         </div>
 
         {/* Section Header */}
@@ -62,13 +63,13 @@ export default function Home() {
             주요 프로젝트와 링크
           </h2>
           <span className="text-[13px] font-medium text-[#8B95A1]">
-            {profileData.links.length}개
+            {profile.links.length}개
           </span>
         </div>
 
         {/* Links List */}
         <section className="flex flex-col gap-2.5 w-full">
-          {profileData.links.map((link) => (
+          {profile.links.map((link) => (
             <LinkItem key={link.id} link={link} />
           ))}
         </section>
@@ -98,7 +99,7 @@ export default function Home() {
 
         {/* Footer */}
         <footer className="text-center pt-8 pb-4 text-[12px] text-[#8B95A1]">
-          <p>© {new Date().getFullYear()} {profileData.name} · My Link</p>
+          <p>© {new Date().getFullYear()} {profile.name} · My Link</p>
         </footer>
       </main>
 
