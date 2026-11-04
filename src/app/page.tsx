@@ -1,15 +1,17 @@
 "use client";
 
 import React, { useState } from "react";
+import LinkList from "@/components/LinkList";
 import ProfileCard from "@/components/ProfileCard";
 import SocialLinks from "@/components/SocialLinks";
-import LinkItem from "@/components/LinkItem";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import Toast from "@/components/Toast";
-import { useHydratedProfile } from "@/hooks/useHydratedProfile";
+import { profileData } from "@/data/profile";
 import { Share2, Sparkles } from "lucide-react";
 
 export default function Home() {
-  const { profile } = useHydratedProfile();
+  const profile = profileData;
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
@@ -24,7 +26,7 @@ export default function Home() {
       }
       setShowToast(true);
     } catch {
-      setToastMessage("프로필 링크가 복사되었어요");
+      setToastMessage("복사하지 못했어요. 주소창의 링크를 복사해 주세요");
       setShowToast(true);
     }
   };
@@ -38,13 +40,15 @@ export default function Home() {
             마이링크
           </span>
         </div>
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleShare}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-[#4E5968] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] tds-press transition-colors cursor-pointer"
+          className="w-10 h-10 rounded-full flex items-center justify-center text-[#4E5968] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98] cursor-pointer"
           aria-label="프로필 링크 복사하기"
         >
           <Share2 className="w-5 h-5 stroke-[2]" />
-        </button>
+        </Button>
       </header>
 
       {/* Main Content Area */}
@@ -57,25 +61,10 @@ export default function Home() {
           <SocialLinks socials={profile.socials} />
         </div>
 
-        {/* Section Header */}
-        <div className="flex items-center justify-between px-1 pt-3 pb-1">
-          <h2 className="text-[18px] font-bold text-[#191F28] tracking-tight">
-            주요 프로젝트와 링크
-          </h2>
-          <span className="text-[13px] font-medium text-[#8B95A1]">
-            {profile.links.length}개
-          </span>
-        </div>
-
-        {/* Links List */}
-        <section className="flex flex-col gap-2.5 w-full">
-          {profile.links.map((link) => (
-            <LinkItem key={link.id} link={link} />
-          ))}
-        </section>
+        <LinkList links={profile.links} />
 
         {/* Contact Banner Card */}
-        <div className="w-full bg-white rounded-[20px] border border-[#E5E8EB]/70 p-5 shadow-tds-card flex items-center justify-between gap-3 mt-1">
+        <Card className="w-full bg-white rounded-[20px] border border-[#E5E8EB]/70 p-5 ring-0 shadow-none flex flex-row items-center justify-between gap-3 mt-1">
           <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-full bg-[#E8F3FF] text-[#3182F6] flex items-center justify-center shrink-0">
               <Sparkles className="w-5 h-5" />
@@ -91,11 +80,11 @@ export default function Home() {
           </div>
           <a
             href="mailto:alex.lee.dev@example.com"
-            className="h-9 px-3.5 rounded-[10px] bg-[#F2F4F6] text-[#191F28] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] text-[13px] font-semibold flex items-center justify-center shrink-0 tds-press transition-colors"
+            className="h-9 px-3.5 rounded-[10px] bg-[#F2F4F6] text-[#191F28] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] text-[13px] font-semibold flex items-center justify-center shrink-0 transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98]"
           >
             메일 보내기
           </a>
-        </div>
+        </Card>
 
         {/* Footer */}
         <footer className="text-center pt-8 pb-4 text-[12px] text-[#8B95A1]">
@@ -106,12 +95,12 @@ export default function Home() {
       {/* Bottom CTA (56pt single primary action with protective gradient) */}
       <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none">
         <div className="w-full max-w-[460px] px-4 pb-5 pt-6 bg-gradient-to-t from-[#F2F4F6] via-[#F2F4F6]/95 to-transparent pointer-events-auto">
-          <button
+          <Button
             onClick={handleShare}
-            className="w-full h-[56px] rounded-[16px] bg-[#3182F6] text-white text-[17px] font-bold shadow-tds-cta hover:bg-[#2B72D6] active:bg-[#1B64CE] tds-press transition-all cursor-pointer flex items-center justify-center gap-2"
+            className="w-full h-[56px] rounded-[16px] bg-[#3182F6] text-white text-[17px] font-bold shadow-tds-cta hover:bg-[#2B72D6] active:bg-[#1B64CE] transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
           >
             <span>프로필 링크 복사하기</span>
-          </button>
+          </Button>
         </div>
       </div>
 

@@ -70,7 +70,7 @@ export default function SocialLinks({ socials }: SocialLinksProps) {
             target="_blank"
             rel="noopener noreferrer"
             aria-label={social.label}
-            className="w-11 h-11 rounded-full bg-[#F2F4F6] text-[#4E5968] hover:bg-[#E5E8EB] hover:text-[#191F28] active:bg-[#D1D6DB] flex items-center justify-center tds-press transition-colors"
+            className="w-11 h-11 rounded-full bg-[#F2F4F6] text-[#4E5968] hover:bg-[#E5E8EB] hover:text-[#191F28] active:bg-[#D1D6DB] flex items-center justify-center transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98]"
           >
             {icon}
             <span className="sr-only">{social.label}</span>

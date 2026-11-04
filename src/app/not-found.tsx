@@ -13,7 +13,7 @@ export default function NotFound() {
         <div className="pt-3">
           <Link
             href="/"
-            className="w-full h-[48px] inline-flex items-center justify-center gap-2 rounded-[14px] bg-[#3182F6] text-white text-[15px] font-semibold hover:bg-[#2B72D6] active:bg-[#1B64CE] tds-press transition-colors shadow-sm"
+            className="w-full h-[48px] inline-flex items-center justify-center gap-2 rounded-[14px] bg-[#3182F6] text-white text-[15px] font-semibold hover:bg-[#2B72D6] active:bg-[#1B64CE] transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98] shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />
             <span>홈으로 돌아가기</span>
