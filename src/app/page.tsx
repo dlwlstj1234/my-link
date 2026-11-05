@@ -2,16 +2,18 @@
 
 import React, { useState } from "react";
 import LinkList from "@/components/LinkList";
+import AddLinkDialog from "@/components/AddLinkDialog";
 import ProfileCard from "@/components/ProfileCard";
 import SocialLinks from "@/components/SocialLinks";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Toast from "@/components/Toast";
-import { profileData } from "@/data/profile";
+import { profileData, type LinkCardItem } from "@/data/profile";
 import { Share2, Sparkles } from "lucide-react";
 
 export default function Home() {
   const profile = profileData;
+  const [links, setLinks] = useState<LinkCardItem[]>(profile.links);
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
 
@@ -61,7 +63,10 @@ export default function Home() {
           <SocialLinks socials={profile.socials} />
         </div>
 
-        <LinkList links={profile.links} />
+        <LinkList
+          links={links}
+          action={<AddLinkDialog onAdd={(link) => setLinks((current) => [...current, link])} />}
+        />
 
         {/* Contact Banner Card */}
         <Card className="w-full bg-white rounded-[20px] border border-[#E5E8EB]/70 p-5 ring-0 shadow-none flex flex-row items-center justify-between gap-3 mt-1">
