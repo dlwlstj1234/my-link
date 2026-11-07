@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import LinkList from "@/components/LinkList";
 import AddLinkDialog from "@/components/AddLinkDialog";
 import ProfileCard from "@/components/ProfileCard";
@@ -10,12 +10,46 @@ import { Card } from "@/components/ui/card";
 import Toast from "@/components/Toast";
 import { profileData, type LinkCardItem } from "@/data/profile";
 import { Share2, Sparkles } from "lucide-react";
+import { loadLinks, saveLink } from "@/lib/links";
+import type { LinkFormValues } from "@/lib/link-schema";
 
 export default function Home() {
   const profile = profileData;
   const [links, setLinks] = useState<LinkCardItem[]>(profile.links);
+  const [isLoadingLinks, setIsLoadingLinks] = useState(true);
+  const [hasLoadedLinks, setHasLoadedLinks] = useState(false);
+  const [isSavingLink, setIsSavingLink] = useState(false);
+  const [linksError, setLinksError] = useState("");
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [toastMessage, setToastMessage] = useState("");
   const [showToast, setShowToast] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setIsLoadingLinks(true);
+    setLinksError("");
+    loadLinks().then((savedLinks) => {
+      if (active) setLinks([...savedLinks, ...profileData.links]);
+    }).catch(() => {
+      if (active) setLinksError("저장된 링크를 불러오지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.");
+    }).finally(() => {
+      if (active) {
+        setIsLoadingLinks(false);
+        setHasLoadedLinks(true);
+      }
+    });
+    return () => { active = false; };
+  }, [loadAttempt]);
+
+  async function handleAddLink(values: LinkFormValues) {
+    setIsSavingLink(true);
+    try {
+      const savedLink = await saveLink(values);
+      setLinks((current) => [savedLink, ...current]);
+    } finally {
+      setIsSavingLink(false);
+    }
+  }
 
   const handleShare = async () => {
     const url = typeof window !== "undefined" ? window.location.href : "https://mylink.me";
@@ -63,9 +97,17 @@ export default function Home() {
           <SocialLinks socials={profile.socials} />
         </div>
 
+        {linksError && (
+          <div role="alert" className="space-y-2 text-sm text-[#F04452]">
+            <p>{linksError}</p>
+            <Button variant="outline" onClick={() => setLoadAttempt((current) => current + 1)}>다시 불러오기</Button>
+          </div>
+        )}
         <LinkList
           links={links}
-          action={<AddLinkDialog onAdd={(link) => setLinks((current) => [...current, link])} />}
+          isLoading={isLoadingLinks || isSavingLink}
+          showSkeleton={isLoadingLinks && !hasLoadedLinks}
+          action={<AddLinkDialog onAdd={handleAddLink} disabled={isLoadingLinks || Boolean(linksError)} />}
         />
 
         {/* Contact Banner Card */}

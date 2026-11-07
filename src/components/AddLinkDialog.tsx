@@ -4,8 +4,7 @@ import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { linkSchema, type LinkFormValues } from "@/lib/link-schema";
-import { Plus, X } from "lucide-react";
-import type { LinkCardItem } from "@/data/profile";
+import { LoaderCircle, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog, DialogClose, DialogContent, DialogDescription,
@@ -16,14 +15,15 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 interface AddLinkDialogProps {
-  onAdd: (link: LinkCardItem) => void;
+  onAdd: (values: LinkFormValues) => Promise<void>;
+  disabled?: boolean;
 }
 
 const inputClassName = "h-12 rounded-[12px] border-[#E5E8EB] bg-[#F9FAFB] text-[#191F28] focus-visible:border-[#3182F6] focus-visible:ring-[#3182F6]/20";
 
-export default function AddLinkDialog({ onAdd }: AddLinkDialogProps) {
+export default function AddLinkDialog({ onAdd, disabled = false }: AddLinkDialogProps) {
   const [open, setOpen] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<LinkFormValues>({
+  const { register, handleSubmit, reset, setError, clearErrors, formState: { errors, isSubmitting } } = useForm<LinkFormValues>({
     resolver: zodResolver(linkSchema),
     mode: "onSubmit",
     reValidateMode: "onChange",
@@ -31,16 +31,15 @@ export default function AddLinkDialog({ onAdd }: AddLinkDialogProps) {
   });
   const id = useId();
 
-  function submitLink(values: LinkFormValues) {
-    onAdd({
-      ...values,
-      id: crypto.randomUUID(),
-      url: new URL(values.url).href,
-      badge: values.badge || undefined,
-      category: values.category || undefined,
-    });
-    setOpen(false);
-    reset();
+  async function submitLink(values: LinkFormValues) {
+    clearErrors("root");
+    try {
+      await onAdd(values);
+      setOpen(false);
+      reset();
+    } catch {
+      setError("root", { message: "링크를 저장하지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요." });
+    }
   }
 
   function fieldProps(name: keyof LinkFormValues) {
@@ -60,22 +59,23 @@ export default function AddLinkDialog({ onAdd }: AddLinkDialogProps) {
   }
 
   return (
-    <Dialog open={open} onOpenChange={(nextOpen) => { setOpen(nextOpen); if (!nextOpen) reset(); }}>
-      <DialogTrigger render={<Button variant="outline" className="h-10 rounded-[12px] border-[#E5E8EB] bg-white text-[#3182F6] hover:bg-[#E8F3FF]" />}>
+    <Dialog open={open} onOpenChange={(nextOpen) => { if (isSubmitting) return; setOpen(nextOpen); if (!nextOpen) reset(); }}>
+      <DialogTrigger disabled={disabled} render={<Button variant="outline" className="h-10 rounded-[12px] border-[#E5E8EB] bg-white text-[#3182F6] hover:bg-[#E8F3FF]" />}>
         <Plus aria-hidden="true" /> 새 링크 추가
       </DialogTrigger>
       <DialogContent showCloseButton={false} className="max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-[24px] bg-white p-6 text-[#191F28] sm:max-w-[440px]">
         <DialogHeader className="pr-8">
           <DialogTitle className="text-xl font-bold">새 링크 추가</DialogTitle>
           <DialogDescription className="text-[#6B7684]">
-            추가한 링크는 바로 목록에 표시돼요. 새로고침하면 사라져요.
+            추가한 링크는 저장 후 목록에 표시돼요. 새로고침해도 유지돼요.
           </DialogDescription>
         </DialogHeader>
-        <DialogClose aria-label="닫기" render={<Button variant="ghost" size="icon" className="absolute top-4 right-4 rounded-full" />}>
+        <DialogClose disabled={isSubmitting} aria-label="닫기" render={<Button variant="ghost" size="icon" className="absolute top-4 right-4 rounded-full" />}>
           <X aria-hidden="true" />
         </DialogClose>
         {open && (
-          <form noValidate onSubmit={handleSubmit(submitLink)} className="flex flex-col gap-4">
+          <form noValidate aria-busy={isSubmitting} onSubmit={handleSubmit(submitLink)} className="flex flex-col gap-4">
+            <fieldset disabled={isSubmitting} className="flex min-w-0 flex-col gap-4">
             <div className="space-y-2">
               <Label htmlFor={`${id}-title`}>제목 (필수)</Label>
               <Input id={`${id}-title`} {...fieldProps("title")} required placeholder="예: 나의 포트폴리오" className={inputClassName} />
@@ -117,8 +117,14 @@ export default function AddLinkDialog({ onAdd }: AddLinkDialogProps) {
             </div>
             <div className="mt-2 flex gap-3">
               <DialogClose render={<Button type="button" variant="secondary" className="h-12 flex-1 rounded-[14px] bg-[#F2F4F6] text-[#191F28]" />}>취소</DialogClose>
-              <Button type="submit" disabled={isSubmitting} className="h-12 flex-1 rounded-[14px] bg-[#3182F6] font-semibold text-white hover:bg-[#1B64CE]">추가하기</Button>
+              <Button type="submit" disabled={isSubmitting} className="h-12 flex-1 rounded-[14px] bg-[#3182F6] font-semibold text-white hover:bg-[#1B64CE]">
+                {isSubmitting && <LoaderCircle aria-hidden="true" className="size-4 motion-safe:animate-spin" />}
+                {isSubmitting ? "저장 중…" : "추가하기"}
+              </Button>
             </div>
+            </fieldset>
+            <span role="status" className="sr-only">{isSubmitting ? "링크를 저장하고 있어요." : ""}</span>
+            {errors.root && <p role="alert" className="text-sm text-[#F04452]">{errors.root.message}</p>}
           </form>
         )}
       </DialogContent>
