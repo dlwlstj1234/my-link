@@ -34,7 +34,9 @@ npm install
 
 Firebase 초기화 모듈은 `src/lib/firebase.ts`에 있으며, 중복 초기화를 방지합니다. Analytics는 브라우저에서 지원 여부를 확인한 후 초기화합니다. `NEXT_PUBLIC_` 변수는 브라우저 번들에 포함되는 Firebase 웹 앱 식별 정보이며, 관리자 서비스 계정 키를 넣으면 안 됩니다.
 
-배포 환경에도 동일한 환경 변수를 설정해야 합니다. Firebase 앱과 Analytics를 초기화하며, 새로 추가한 링크는 Cloud Firestore의 `users/anonymous/links/{documentId}`에 저장합니다. 저장 성공 후 목록 맨 위에 즉시 반영하고 새로고침 시 다시 조회합니다. 생성 시각은 `createdAt` 서버 타임스탬프로 저장하며, 최신순(내림차순)으로 표시합니다. 기존 더미 링크는 저장된 링크 뒤에 유지하고 Firestore에 자동 업로드하지 않습니다.
+배포 환경에도 동일한 환경 변수를 설정해야 합니다. Firebase 앱과 Analytics를 초기화하며, 링크는 Cloud Firestore의 `users/anonymous/links/{documentId}`에서 조회·추가·수정·삭제합니다. 추가 성공 후 목록 맨 위에 즉시 반영하고, 수정·삭제도 서버 성공 후 화면에 반영합니다. `createdAt` 최신순을 유지하며 수정 시에는 `updatedAt`만 갱신합니다. 각 카드의 수정·삭제 버튼은 항상 표시됩니다. 수정은 인라인 폼이며 추가와 동일한 Zod·React Hook Form 검증을 사용합니다. 삭제는 확인 모달의 destructive 버튼을 통해 수행합니다.
+
+더미 링크 10개는 `node scripts/migrate-demo-links.cjs`로 한 번 이전했습니다. 페이지는 더미 데이터를 합치지 않고 Firestore 데이터만 표시합니다. 이전 스크립트는 페이지에서 자동 실행하지 않으며, 명시적으로 다시 실행하면 삭제한 더미 문서가 재생성될 수 있으므로 재실행에 주의합니다. 기존 이메일 문의 링크를 유지하기 위해 입력 폼은 HTTP(S) 주소와 유효한 `mailto:` 이메일 주소를 허용합니다.
 
 Firestore 데이터베이스와 해당 경로의 읽기·생성 권한이 필요합니다. `anonymous`는 현재 모든 방문자가 공유하는 고정 문서 경로이며, Firebase 익명 인증 UID를 의미하지 않습니다. 접근 권한은 Firebase 콘솔의 보안 규칙으로 관리하며, 이 프로젝트 코드에서는 규칙을 변경하지 않습니다.
 

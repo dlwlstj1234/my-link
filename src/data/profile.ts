@@ -14,6 +14,7 @@ export interface LinkCardItem {
   highlight?: boolean;
   image?: string;
   category?: string;
+  updatedAt?: number;
 }
 
 export interface StatItem {

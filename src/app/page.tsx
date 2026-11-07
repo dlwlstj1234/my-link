@@ -10,12 +10,12 @@ import { Card } from "@/components/ui/card";
 import Toast from "@/components/Toast";
 import { profileData, type LinkCardItem } from "@/data/profile";
 import { Share2, Sparkles } from "lucide-react";
-import { loadLinks, saveLink } from "@/lib/links";
+import { deleteLink, loadLinks, saveLink, updateLink } from "@/lib/links";
 import type { LinkFormValues } from "@/lib/link-schema";
 
 export default function Home() {
   const profile = profileData;
-  const [links, setLinks] = useState<LinkCardItem[]>(profile.links);
+  const [links, setLinks] = useState<LinkCardItem[]>([]);
   const [isLoadingLinks, setIsLoadingLinks] = useState(true);
   const [hasLoadedLinks, setHasLoadedLinks] = useState(false);
   const [isSavingLink, setIsSavingLink] = useState(false);
@@ -29,7 +29,7 @@ export default function Home() {
     setIsLoadingLinks(true);
     setLinksError("");
     loadLinks().then((savedLinks) => {
-      if (active) setLinks([...savedLinks, ...profileData.links]);
+      if (active) setLinks(savedLinks);
     }).catch(() => {
       if (active) setLinksError("저장된 링크를 불러오지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.");
     }).finally(() => {
@@ -105,6 +105,14 @@ export default function Home() {
         )}
         <LinkList
           links={links}
+          onUpdate={async (id, values) => {
+            const updated = await updateLink(id, values);
+            setLinks((current) => current.map((link) => link.id === id ? { ...link, ...updated } : link));
+          }}
+          onDelete={async (id) => {
+            await deleteLink(id);
+            setLinks((current) => current.filter((link) => link.id !== id));
+          }}
           isLoading={isLoadingLinks || isSavingLink}
           showSkeleton={isLoadingLinks && !hasLoadedLinks}
           action={<AddLinkDialog onAdd={handleAddLink} disabled={isLoadingLinks || Boolean(linksError)} />}
