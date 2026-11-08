@@ -15,6 +15,7 @@ export interface LinkCardItem {
   image?: string;
   category?: string;
   updatedAt?: number;
+  clickCount?: number;
 }
 
 export interface StatItem {

@@ -86,6 +86,21 @@ service cloud.firestore {
         allow delete: if owns(userId);
       }
 
+      // Visitors may only create 1 or increment an existing count by exactly 1.
+      match /linkClicks/{linkId} {
+        allow get: if true;
+        allow list: if owns(userId);
+        allow create: if exists(/databases/$(database)/documents/users/$(userId)/links/$(linkId))
+          && request.resource.data.keys().hasOnly(['clickCount'])
+          && request.resource.data.clickCount is int
+          && request.resource.data.clickCount == 1;
+        allow update: if exists(/databases/$(database)/documents/users/$(userId)/links/$(linkId))
+          && request.resource.data.keys().hasOnly(['clickCount'])
+          && request.resource.data.clickCount is int
+          && request.resource.data.clickCount == resource.data.clickCount + 1;
+        allow delete: if owns(userId);
+      }
+
       // profile is a collection; actual documents are profile/{profileId}.
       // Only public fields are permitted, preventing accidental email/token disclosure.
       match /profile/{profileId} {

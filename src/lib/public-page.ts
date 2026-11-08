@@ -30,5 +30,5 @@ export async function loadPublicPage(name: string) {
       ...(link.updatedAt instanceof Timestamp ? { updatedAt: link.updatedAt.toMillis() } : {}),
     };
   });
-  return { profile, links };
+  return { uid, profile, links };
 }

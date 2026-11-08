@@ -8,6 +8,9 @@ import { Card } from "@/components/ui/card";
 import type { LinkFormValues } from "@/lib/link-schema";
 
 interface LinkListProps {
+  ownerUid: string;
+  showClickCount?: boolean;
+  clickCountsStatus?: "loading" | "error";
   links: LinkCardItem[];
   title?: string;
   action?: ReactNode;
@@ -17,7 +20,7 @@ interface LinkListProps {
   onDelete?: (id: string) => Promise<void>;
 }
 
-export default function LinkList({ links, title = "주요 프로젝트와 링크", action, isLoading = false, showSkeleton = false, onUpdate, onDelete }: LinkListProps) {
+export default function LinkList({ ownerUid, showClickCount = true, clickCountsStatus, links, title = "주요 프로젝트와 링크", action, isLoading = false, showSkeleton = false, onUpdate, onDelete }: LinkListProps) {
   const headingId = useId();
 
   return (
@@ -53,7 +56,7 @@ export default function LinkList({ links, title = "주요 프로젝트와 링크
       ) : <ul className="flex flex-col gap-3">
         {links.map((link) => (
           <li key={link.id} className="min-w-0">
-            <LinkItem link={link} onUpdate={onUpdate} onDelete={onDelete} disabled={isLoading} />
+            <LinkItem ownerUid={ownerUid} showClickCount={showClickCount} clickCountsStatus={clickCountsStatus} link={link} onUpdate={onUpdate} onDelete={onDelete} disabled={isLoading} />
           </li>
         ))}
       </ul>}

@@ -1,4 +1,4 @@
-import { addDoc, collection, deleteDoc, doc, getDocFromServer, getDocsFromServer, getFirestore, orderBy, query, serverTimestamp, Timestamp, updateDoc } from "firebase/firestore";
+import { addDoc, collection, doc, getDocFromServer, getDocsFromServer, getFirestore, orderBy, query, serverTimestamp, Timestamp, updateDoc, writeBatch } from "firebase/firestore";
 import type { LinkCardItem } from "@/data/profile";
 import { getFirebaseAuth } from "@/lib/auth";
 import { getFirebaseApp } from "@/lib/firebase";
@@ -16,6 +16,15 @@ export async function loadLinks(uid: string): Promise<LinkCardItem[]> {
     ...(typeof document.data().image === "string" && /^https:\/\//.test(document.data().image) ? { image: document.data().image } : {}),
     id: document.id,
     ...(document.data().updatedAt instanceof Timestamp ? { updatedAt: document.data().updatedAt.toMillis() } : {}),
+  }));
+}
+
+export async function loadLinkCounts(uid: string): Promise<Record<string, number>> {
+  linksCollection(uid); // Enforce the same account boundary as the links query.
+  const snapshot = await getDocsFromServer(collection(getFirestore(getFirebaseApp()), "users", uid, "linkClicks"));
+  return Object.fromEntries(snapshot.docs.map((document) => {
+    const value = document.data().clickCount;
+    return [document.id, Number.isSafeInteger(value) && value >= 0 ? value : 0];
   }));
 }
 
@@ -37,5 +46,10 @@ export async function updateLink(uid: string, id: string, input: LinkFormValues)
 }
 
 export async function deleteLink(uid: string, id: string): Promise<void> {
-  await deleteDoc(doc(linksCollection(uid), id));
+  const reference = doc(linksCollection(uid), id);
+  const db = getFirestore(getFirebaseApp());
+  const batch = writeBatch(db);
+  batch.delete(reference);
+  batch.delete(doc(db, "users", uid, "linkClicks", id));
+  await batch.commit();
 }

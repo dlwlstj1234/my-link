@@ -4,7 +4,7 @@ import type { User } from "firebase/auth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type { LinkCardItem } from "@/data/profile";
 import { getFirebaseAuth } from "@/lib/auth";
-import { deleteLink, loadLinks, saveLink, updateLink } from "@/lib/links";
+import { deleteLink, loadLinks, loadLinkCounts, saveLink, updateLink } from "@/lib/links";
 import type { LinkFormValues } from "@/lib/link-schema";
 import { userKeys } from "@/lib/query-keys";
 import { loadUserProfile } from "@/lib/user-profile";
@@ -19,6 +19,9 @@ export function useUserData(user: User) {
   } });
   const profileQuery = useQuery({ queryKey: userKeys.profile(uid), queryFn: async ({ signal }) => {
     const profile = await loadUserProfile(user); signal.throwIfAborted(); return profile;
+  } });
+  const countsQuery = useQuery({ queryKey: userKeys.linkCounts(uid), retry: false, queryFn: async ({ signal }) => {
+    const counts = await loadLinkCounts(uid); signal.throwIfAborted(); return counts;
   } });
   const beforeChange = () => client.cancelQueries({ queryKey: linksKey });
   const refresh = () => {
@@ -54,5 +57,5 @@ export function useUserData(user: User) {
       refresh();
     },
   });
-  return { linksQuery, profileQuery, add, update, remove };
+  return { linksQuery, profileQuery, countsQuery, add, update, remove };
 }

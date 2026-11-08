@@ -20,8 +20,8 @@ import { Card, CardContent } from "@/components/ui/card";
 interface ProfileSummary { uid: string; profile: UserProfile | null; linkCount: number | null }
 
 function UserWorkspace({ user, onSummaryChange, editRequest }: { user: User; onSummaryChange: (summary: ProfileSummary) => void; editRequest: number }) {
-  const { linksQuery, profileQuery, add, update, remove } = useUserData(user);
-  const links = linksQuery.data ?? [];
+  const { linksQuery, profileQuery, countsQuery, add, update, remove } = useUserData(user);
+  const links = (linksQuery.data ?? []).map((link) => ({ ...link, clickCount: Math.max(link.clickCount ?? 0, countsQuery.data?.[link.id] ?? 0) }));
   const profile = profileQuery.data ?? null;
   const loading = linksQuery.isPending || profileQuery.isPending;
   const saving = add.isPending || update.isPending || remove.isPending;
@@ -57,6 +57,8 @@ function UserWorkspace({ user, onSummaryChange, editRequest }: { user: User; onS
       </>}
       {error && <div role="alert" className="space-y-2 text-sm text-[#F04452]"><p>{error}</p><Button variant="outline" onClick={() => { void linksQuery.refetch(); void profileQuery.refetch(); }}>다시 불러오기</Button></div>}
       <LinkList
+        clickCountsStatus={countsQuery.isError ? "error" : countsQuery.isPending ? "loading" : undefined}
+        ownerUid={user.uid}
         title="내 링크"
         links={links}
         isLoading={linksQuery.isFetching || profileQuery.isFetching || saving}
@@ -65,6 +67,7 @@ function UserWorkspace({ user, onSummaryChange, editRequest }: { user: User; onS
         onUpdate={async (id, values) => { await update.mutateAsync({ id, values }); }}
         onDelete={async (id) => { await remove.mutateAsync(id); }}
       />
+      {countsQuery.isError && <div role="status" className="space-y-2 text-sm text-[#6B7684]"><p>링크는 불러왔지만 클릭수 조회 권한이 없거나 연결이 원활하지 않아요. Firebase 콘솔에 최신 firestore.rules를 게시했는지 확인해주세요.</p><Button variant="outline" disabled={countsQuery.isFetching} onClick={() => { void countsQuery.refetch(); }}>클릭수 다시 불러오기</Button></div>}
       {!loading && !error && links.length === 0 && <Card className="rounded-[20px] bg-white p-6 text-center shadow-none ring-0"><LinkIcon aria-hidden="true" className="mx-auto mb-3 size-7 text-[#3182F6]" /><h2 className="font-semibold">아직 등록한 링크가 없어요</h2><p className="mt-2 text-sm leading-relaxed text-[#6B7684]">새 링크 추가 버튼으로 나만의 링크 목록을 만들어 보세요.</p></Card>}
     </>
   );

@@ -5,7 +5,7 @@ const path = require("node:path");
 const ts = require("typescript");
 const Module = require("node:module");
 
-function createEnvironment() {
+function createEnvironment(failedCollections = []) {
   const auth = { currentUser: null };
   const records = new Map();
   const requests = [];
@@ -24,6 +24,7 @@ function createEnvironment() {
     doc: (reference, ...parts) => ({ path: [reference.path, ...parts].filter(Boolean).join("/") }),
     orderBy: () => ({}), query: (reference) => reference,
     getDocsFromServer: async (reference) => {
+      if (failedCollections.includes(reference.path)) throw new Error("permission-denied");
       requests.push(reference.path);
       return { docs: [...records.keys()].filter((key) => key.startsWith(reference.path + "/")).map((key) => snapshot({ path: key })) };
     },
@@ -38,6 +39,10 @@ function createEnvironment() {
     },
     getDocFromServer: async (reference) => snapshot(reference),
     deleteDoc: async (reference) => records.delete(reference.path),
+    writeBatch: () => {
+      const deletions = [];
+      return { delete: (reference) => deletions.push(reference.path), commit: async () => { for (const key of deletions) records.delete(key); } };
+    },
     setDoc: async (reference, data, options) => records.set(reference.path, { ...(options?.merge ? records.get(reference.path) : {}), ...data }),
     runTransaction: (_, callback) => {
       const result = transactionQueue.then(async () => {
@@ -95,17 +100,28 @@ test("CRUD uses the signed-in UID path and account changes isolate lists", async
   const { auth, links, records, requests } = createEnvironment();
   auth.currentUser = { uid: "alice" };
   const created = await links.saveLink("alice", input);
+  records.set(`users/alice/linkClicks/${created.id}`, { clickCount: 3 });
   assert(records.has(`users/alice/links/${created.id}`));
   const updated = await links.updateLink("alice", created.id, { ...input, title: "Edited" });
   assert.equal(updated.title, "Edited");
   assert.equal((await links.loadLinks("alice"))[0].title, "Edited");
+  assert.equal((await links.loadLinkCounts("alice"))[created.id], 3);
   auth.currentUser = { uid: "bob" };
   assert.deepEqual(await links.loadLinks("bob"), []);
   await assert.rejects(links.deleteLink("alice", created.id));
   auth.currentUser = { uid: "alice" };
   await links.deleteLink("alice", created.id);
+  assert(!records.has(`users/alice/linkClicks/${created.id}`));
   assert.deepEqual(await links.loadLinks("alice"), []);
   assert(requests.every((value) => !value.includes("anonymous")));
+});
+
+test("denied click-count access does not prevent loading the user's links", async () => {
+  const { auth, links } = createEnvironment(["users/alice/linkClicks"]);
+  auth.currentUser = { uid: "alice" };
+  await links.saveLink("alice", input);
+  await assert.rejects(links.loadLinkCounts("alice"), /permission-denied/);
+  assert.equal((await links.loadLinks("alice")).length, 1);
 });
 
 test("initial name uses email prefix, and later loads preserve a custom display name", async () => {

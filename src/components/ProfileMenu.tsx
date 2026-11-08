@@ -2,7 +2,7 @@
 
 import ProfileAvatar from "@/components/ProfileAvatar";
 import Link from "next/link";
-import { ChevronDown, Link as LinkIcon, LoaderCircle, LogOut, UserRoundPen } from "lucide-react";
+import { ChartNoAxesCombined, ChevronDown, Link as LinkIcon, LoaderCircle, LogOut, UserRoundPen } from "lucide-react";
 import type { UserProfile } from "@/lib/user-profile";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -47,6 +47,7 @@ export default function ProfileMenu({ profile, linkCount, busy, onLogout, onEdit
         {pageHref && <DropdownMenuItem render={<Link href={pageHref} />} className="min-h-11 cursor-pointer gap-2 rounded-[12px] px-3 text-[#4E5968] focus:bg-[#F2F4F6]">
           <LinkIcon aria-hidden="true" /> 내 페이지 보기
         </DropdownMenuItem>}
+        <DropdownMenuItem render={<Link href="/stats" />} className="min-h-11 cursor-pointer gap-2 rounded-[12px] px-3 text-[#4E5968] focus:bg-[#F2F4F6]"><ChartNoAxesCombined aria-hidden="true" />링크 통계</DropdownMenuItem>
         <DropdownMenuItem disabled={busy || !canEdit} onClick={onEdit} className="min-h-11 cursor-pointer gap-2 rounded-[12px] px-3 text-[#4E5968] focus:bg-[#F2F4F6]">
           <UserRoundPen aria-hidden="true" /> 프로필 수정
         </DropdownMenuItem>

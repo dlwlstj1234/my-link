@@ -29,7 +29,7 @@ export default async function PublicPage({ params }: { params: Promise<{ display
             </div>
           </CardContent>
         </Card>
-        <LinkList title="링크" links={links} />
+        <LinkList ownerUid={page.uid} showClickCount={false} title="링크" links={links} />
         {links.length === 0 && <p className="py-8 text-center text-sm text-[#6B7684]">아직 등록한 링크가 없어요.</p>}
       </main>
     </div>
