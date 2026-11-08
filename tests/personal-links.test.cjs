@@ -187,6 +187,9 @@ test("public pages resolve names without login and omit private profile fields",
   await profiles.updateUserDisplayName(user.uid, "공개_Alice", "소개");
   await links.saveLink(user.uid, input);
   auth.currentUser = null;
+  const publicProfile = await publicPages.loadPublicProfile("공개_ALICE");
+  assert.deepEqual(publicProfile.profile, { displayName: "공개_Alice", photoURL: "", bio: "소개" });
+  assert.equal(requests.length, 0);
   const page = await publicPages.loadPublicPage("공개_ALICE");
   assert.deepEqual(page.profile, { displayName: "공개_Alice", photoURL: "", bio: "소개" });
   assert.equal(page.links.length, 1);

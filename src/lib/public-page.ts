@@ -4,7 +4,7 @@ import { displayNameKey, displayNameSchema } from "@/lib/display-name";
 import { linkSchema } from "@/lib/link-schema";
 import type { LinkCardItem } from "@/data/profile";
 
-export async function loadPublicPage(name: string) {
+export async function loadPublicProfile(name: string) {
   if (!displayNameSchema.safeParse(name).success) return null;
   const db = getFirestore(getFirebaseApp());
   const reservation = await getDocFromServer(doc(db, "displayNames", displayNameKey(name)));
@@ -20,6 +20,14 @@ export async function loadPublicPage(name: string) {
     photoURL: typeof data.photoURL === "string" ? data.photoURL : "",
     bio: typeof data.bio === "string" ? data.bio : "",
   };
+  return { uid, profile };
+}
+
+export async function loadPublicPage(name: string) {
+  const result = await loadPublicProfile(name);
+  if (!result) return null;
+  const { uid, profile } = result;
+  const db = getFirestore(getFirebaseApp());
   const linksSnapshot = await getDocsFromServer(query(collection(db, "users", uid, "links"), orderBy("createdAt", "desc")));
   const links: LinkCardItem[] = linksSnapshot.docs.map((document) => {
     const link = document.data();

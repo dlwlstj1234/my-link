@@ -1,11 +1,25 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import LinkList from "@/components/LinkList";
 import { Card, CardContent } from "@/components/ui/card";
-import { loadPublicPage } from "@/lib/public-page";
+import { loadPublicPage, loadPublicProfile } from "@/lib/public-page";
 
 export const dynamic = "force-dynamic";
+
+export async function generateMetadata({ params }: { params: Promise<{ displayname: string }> }): Promise<Metadata> {
+  const { displayname } = await params;
+  try {
+    const result = await loadPublicProfile(displayname);
+    if (!result) return { title: "프로필을 찾을 수 없어요", robots: { index: false, follow: false } };
+    const name = result.profile.displayName;
+    const title = `${name}님의 링크`;
+    const description = Array.from(result.profile.bio.trim().replace(/\s+/g, " ") || `${name}님의 관심사와 작업을 만나보세요. 포트폴리오, 블로그와 프로젝트 링크를 한곳에 모았습니다.`).slice(0, 160).join("");
+    const url = `/${encodeURIComponent(name)}`;
+    return { title, description, alternates: { canonical: url }, robots: { index: true, follow: true }, openGraph: { title: `${name}님의 마이링크`, description, url, siteName: "마이링크", locale: "ko_KR", type: "profile", username: name }, twitter: { card: "summary_large_image", title: `${name}님의 마이링크`, description } };
+  } catch { return { title: "프로필을 불러오지 못했어요", robots: { index: false, follow: false } }; }
+}
 
 export default async function PublicPage({ params }: { params: Promise<{ displayname: string }> }) {
   const { displayname } = await params;
