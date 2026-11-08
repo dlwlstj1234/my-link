@@ -13,8 +13,8 @@ import { linkSchema, type LinkFormValues } from "@/lib/link-schema";
 
 export interface LinkItemProps {
   link: LinkCardItem;
-  onUpdate: (id: string, values: LinkFormValues) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onUpdate?: (id: string, values: LinkFormValues) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
   disabled?: boolean;
 }
 
@@ -26,7 +26,7 @@ export default function LinkItem({ link, onUpdate, onDelete, disabled = false }:
   const Icon = linkIcons[link.icon as keyof typeof linkIcons] ?? Globe;
   return (
     <div className="overflow-hidden rounded-[20px] border border-[#E5E8EB] bg-white">
-      {editing ? (
+      {editing && onUpdate ? (
         <div className="p-4">
           <h3 className="mb-4 text-base font-semibold">링크 수정</h3>
           <LinkForm
@@ -72,7 +72,7 @@ export default function LinkItem({ link, onUpdate, onDelete, disabled = false }:
       </Card>
     </a>
       )}
-      <div className="flex flex-wrap items-center justify-end gap-1 border-t border-[#E5E8EB] px-3 py-2">
+      {onUpdate && onDelete && <div className="flex flex-wrap items-center justify-end gap-1 border-t border-[#E5E8EB] px-3 py-2">
         {link.updatedAt && (
           <time dateTime={new Date(link.updatedAt).toISOString()} className="mr-auto text-[11px] text-[#6B7684]">
             수정 {new Intl.DateTimeFormat("ko-KR", { timeZone: "Asia/Seoul", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit" }).format(link.updatedAt)}
@@ -80,7 +80,7 @@ export default function LinkItem({ link, onUpdate, onDelete, disabled = false }:
         )}
         <Button type="button" variant="ghost" disabled={disabled || busy || editing} aria-label={`${link.title} 수정`} onClick={() => setEditing(true)} className="h-10 rounded-[12px] text-[#4E5968]">수정</Button>
         <DeleteLinkDialog title={link.title} disabled={disabled || busy || editing} onDelete={() => onDelete(link.id)} />
-      </div>
+      </div>}
     </div>
   );
 }

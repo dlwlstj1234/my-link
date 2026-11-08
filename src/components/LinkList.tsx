@@ -13,8 +13,8 @@ interface LinkListProps {
   action?: ReactNode;
   isLoading?: boolean;
   showSkeleton?: boolean;
-  onUpdate: (id: string, values: LinkFormValues) => Promise<void>;
-  onDelete: (id: string) => Promise<void>;
+  onUpdate?: (id: string, values: LinkFormValues) => Promise<void>;
+  onDelete?: (id: string) => Promise<void>;
 }
 
 export default function LinkList({ links, title = "주요 프로젝트와 링크", action, isLoading = false, showSkeleton = false, onUpdate, onDelete }: LinkListProps) {

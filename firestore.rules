@@ -1,0 +1,126 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function owns(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+    function optionalText(data, key, maxLength) {
+      return !(key in data) || (data[key] is string && data[key].size() <= maxLength);
+    }
+    function validPhoto(value) {
+      return value is string && value.size() <= 2048
+        && (value == '' || value.matches('https://[^\\s]+'));
+    }
+    function validName(userId) {
+      let data = request.resource.data;
+      return data.displayName is string
+        && data.displayName.matches('^[가-힣a-zA-Z0-9_-]{2,20}$')
+        && data.displayNameKey == data.displayName.lower()
+        && getAfter(/databases/$(database)/documents/displayNames/$(data.displayNameKey)).data.uid == userId;
+    }
+    function validPrivateProfile(userId) {
+      let data = request.resource.data;
+      return data.keys().hasAll(['displayName', 'displayNameKey', 'email', 'photoURL', 'bio', 'createdAt'])
+        && data.keys().hasOnly(['displayName', 'displayNameKey', 'email', 'photoURL', 'bio', 'createdAt', 'updatedAt'])
+        && validName(userId)
+        && data.email is string && data.email == request.auth.token.email
+        && validPhoto(data.photoURL)
+        && data.bio is string && data.bio.size() <= 300
+        && data.createdAt is timestamp;
+    }
+    function validLink() {
+      let data = request.resource.data;
+      return data.keys().hasAll(['title', 'description', 'url', 'icon', 'createdAt'])
+        && data.keys().hasOnly(['title', 'description', 'url', 'icon', 'category', 'badge', 'createdAt', 'updatedAt', 'image', 'highlight'])
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 100
+        && data.title.matches('.*[^\\s].*')
+        && data.description is string && data.description.size() <= 300
+        && data.url is string && data.url.size() <= 8192
+        && (data.url.matches('https?://[^/\\s]+.*') || data.url.matches('mailto:[^@\\s]+@[^@\\s]+'))
+        && data.icon in ['Globe', 'FolderGit2', 'BookOpen', 'Coffee', 'Send', 'Sparkles']
+        && optionalText(data, 'category', 20) && optionalText(data, 'badge', 20)
+        && (!('image' in data) || validPhoto(data.image))
+        && (!('highlight' in data) || data.highlight is bool)
+        && data.createdAt is timestamp;
+    }
+    function validPublicProfile(userId) {
+      let data = request.resource.data;
+      let profile = getAfter(/databases/$(database)/documents/users/$(userId)).data;
+      return data.keys().hasAll(['displayName', 'photoURL', 'bio'])
+        && data.keys().hasOnly(['displayName', 'photoURL', 'bio', 'createdAt', 'updatedAt'])
+        && data.displayName == profile.displayName
+        && data.photoURL == profile.photoURL
+        && data.bio == profile.bio
+        && data.displayName is string && data.displayName.size() >= 2 && data.displayName.size() <= 20
+        && validPhoto(data.photoURL) && data.bio is string && data.bio.size() <= 300;
+    }
+    function validOptionalCreateTimes() {
+      let data = request.resource.data;
+      return (!('createdAt' in data) || data.createdAt == request.time)
+        && (!('updatedAt' in data) || data.updatedAt == request.time);
+    }
+    function validOptionalUpdateTimes() {
+      let data = request.resource.data;
+      return !data.diff(resource.data).affectedKeys().hasAny(['createdAt'])
+        && (!('updatedAt' in data) || data.updatedAt == request.time);
+    }
+
+    // Private account document: email must never be exposed through public reads.
+    match /users/{userId} {
+      allow read: if owns(userId);
+      allow create: if owns(userId) && validPrivateProfile(userId)
+        && request.resource.data.createdAt == request.time && validOptionalCreateTimes();
+      allow update: if owns(userId) && validPrivateProfile(userId)
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedAt == request.time;
+      // Account deletion requires coordinated cleanup of links and name reservations.
+      allow delete: if false;
+
+      match /links/{linkId} {
+        allow read: if true;
+        allow create: if owns(userId) && validLink()
+          && request.resource.data.createdAt == request.time && validOptionalCreateTimes();
+        allow update: if owns(userId) && validLink()
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.updatedAt == request.time;
+        allow delete: if owns(userId);
+      }
+
+      // profile is a collection; actual documents are profile/{profileId}.
+      // Only public fields are permitted, preventing accidental email/token disclosure.
+      match /profile/{profileId} {
+        allow read: if true;
+        allow create: if owns(userId) && validPublicProfile(userId) && validOptionalCreateTimes();
+        allow update: if owns(userId) && validPublicProfile(userId) && validOptionalUpdateTimes();
+        allow delete: if owns(userId);
+      }
+    }
+
+    // Current public-page code uses this sanitized mirror.
+    match /publicProfiles/{userId} {
+      allow read: if true;
+      allow create: if owns(userId) && validPublicProfile(userId) && validOptionalCreateTimes();
+      allow update: if owns(userId) && validPublicProfile(userId) && validOptionalUpdateTimes();
+      allow delete: if owns(userId);
+    }
+
+    // Public single-name lookup is needed for /{displayName}; enumeration is blocked.
+    match /displayNames/{nameKey} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if request.auth != null
+        && nameKey.matches('^[가-힣a-z0-9_-]{2,20}$')
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayNameKey == nameKey;
+      allow update: if request.auth != null
+        && resource.data.uid == request.auth.uid
+        && request.resource.data.keys().hasOnly(['uid'])
+        && request.resource.data.uid == resource.data.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayNameKey == nameKey;
+      allow delete: if request.auth != null && resource.data.uid == request.auth.uid
+        && getAfter(/databases/$(database)/documents/users/$(request.auth.uid)).data.displayNameKey != nameKey;
+    }
+    // Unmatched documents and deeper subcollections are denied by default.
+  }
+}

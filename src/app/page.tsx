@@ -1,170 +1,133 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import ProfileAvatar from "@/components/ProfileAvatar";
+import type { User } from "firebase/auth";
+import { FirebaseError } from "firebase/app";
+import { LoaderCircle, LogIn, LogOut, Link as LinkIcon } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { logOut, signInWithGoogle } from "@/lib/auth";
+import { useUserData } from "@/hooks/useUserData";
+import { type UserProfile } from "@/lib/user-profile";
 import LinkList from "@/components/LinkList";
 import AddLinkDialog from "@/components/AddLinkDialog";
-import ProfileCard from "@/components/ProfileCard";
-import SocialLinks from "@/components/SocialLinks";
+import ProfileMenu from "@/components/ProfileMenu";
+import EditProfileDialog from "@/components/EditProfileDialog";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import Toast from "@/components/Toast";
-import { profileData, type LinkCardItem } from "@/data/profile";
-import { Share2, Sparkles } from "lucide-react";
-import { deleteLink, loadLinks, saveLink, updateLink } from "@/lib/links";
-import type { LinkFormValues } from "@/lib/link-schema";
+import { Card, CardContent } from "@/components/ui/card";
 
-export default function Home() {
-  const profile = profileData;
-  const [links, setLinks] = useState<LinkCardItem[]>([]);
-  const [isLoadingLinks, setIsLoadingLinks] = useState(true);
-  const [hasLoadedLinks, setHasLoadedLinks] = useState(false);
-  const [isSavingLink, setIsSavingLink] = useState(false);
-  const [linksError, setLinksError] = useState("");
-  const [loadAttempt, setLoadAttempt] = useState(0);
-  const [toastMessage, setToastMessage] = useState("");
-  const [showToast, setShowToast] = useState(false);
+interface ProfileSummary { uid: string; profile: UserProfile | null; linkCount: number | null }
+
+function UserWorkspace({ user, onSummaryChange, editRequest }: { user: User; onSummaryChange: (summary: ProfileSummary) => void; editRequest: number }) {
+  const { linksQuery, profileQuery, add, update, remove } = useUserData(user);
+  const links = linksQuery.data ?? [];
+  const profile = profileQuery.data ?? null;
+  const loading = linksQuery.isPending || profileQuery.isPending;
+  const saving = add.isPending || update.isPending || remove.isPending;
+  const error = linksQuery.isError || profileQuery.isError ? "내 정보를 불러오지 못했어요. 연결 상태와 Firestore 접근 권한을 확인하고 다시 시도해 주세요." : "";
+  const [editingProfile, setEditingProfile] = useState(false);
+
+  useEffect(() => { if (editRequest) setEditingProfile(true); }, [editRequest]);
 
   useEffect(() => {
-    let active = true;
-    setIsLoadingLinks(true);
-    setLinksError("");
-    loadLinks().then((savedLinks) => {
-      if (active) setLinks(savedLinks);
-    }).catch(() => {
-      if (active) setLinksError("저장된 링크를 불러오지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.");
-    }).finally(() => {
-      if (active) {
-        setIsLoadingLinks(false);
-        setHasLoadedLinks(true);
-      }
-    });
-    return () => { active = false; };
-  }, [loadAttempt]);
+    onSummaryChange({ uid: user.uid, profile, linkCount: loading || error ? null : links.length });
+  }, [user.uid, profile, loading, error, links.length, onSummaryChange]);
 
-  async function handleAddLink(values: LinkFormValues) {
-    setIsSavingLink(true);
-    try {
-      const savedLink = await saveLink(values);
-      setLinks((current) => [savedLink, ...current]);
-    } finally {
-      setIsSavingLink(false);
-    }
-  }
-
-  const handleShare = async () => {
-    const url = typeof window !== "undefined" ? window.location.href : "https://mylink.me";
-    try {
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        await navigator.clipboard.writeText(url);
-        setToastMessage("프로필 링크가 복사되었어요");
-      } else {
-        setToastMessage("링크: " + url);
-      }
-      setShowToast(true);
-    } catch {
-      setToastMessage("복사하지 못했어요. 주소창의 링크를 복사해 주세요");
-      setShowToast(true);
-    }
-  };
+  const name = profile?.displayName ?? (user.email?.split("@")[0] || "마이링크 사용자");
+  const email = profile?.email ?? user.email ?? "";
+  const photo = profile?.photoURL ?? user.photoURL ?? "";
 
   return (
-    <div className="relative min-h-screen w-full bg-[#F2F4F6] text-[#191F28] flex flex-col items-center">
-      {/* Top App Bar (56pt standard) */}
-      <header className="sticky top-0 z-30 w-full max-w-[460px] h-[56px] px-5 flex items-center justify-between bg-[#F2F4F6]/90 backdrop-blur-md">
-        <div className="flex items-center gap-2">
-          <span className="text-[17px] font-bold text-[#191F28] tracking-tight">
-            마이링크
-          </span>
-        </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleShare}
-          className="w-10 h-10 rounded-full flex items-center justify-center text-[#4E5968] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98] cursor-pointer"
-          aria-label="프로필 링크 복사하기"
-        >
-          <Share2 className="w-5 h-5 stroke-[2]" />
-        </Button>
-      </header>
-
-      {/* Main Content Area */}
-      <main className="w-full max-w-[460px] px-4 sm:px-5 pb-32 flex flex-col gap-4">
-        {/* Profile Card */}
-        <ProfileCard profile={profile} />
-
-        {/* Social Links Row */}
-        <div className="w-full py-1">
-          <SocialLinks socials={profile.socials} />
-        </div>
-
-        {linksError && (
-          <div role="alert" className="space-y-2 text-sm text-[#F04452]">
-            <p>{linksError}</p>
-            <Button variant="outline" onClick={() => setLoadAttempt((current) => current + 1)}>다시 불러오기</Button>
+    <>
+      <Card className="rounded-[24px] border border-[#E5E8EB] bg-white p-0 shadow-none ring-0">
+        <CardContent className="flex items-center gap-4 p-6">
+          <ProfileAvatar key={photo} name={name} photoURL={photo} size={72} />
+          <div className="min-w-0">
+            <p className="mb-1 text-xs font-semibold text-[#3182F6]">나의 마이링크</p>
+            <h1 className="break-words text-xl font-bold text-[#191F28]">{name}</h1>
+            <p className="mt-1 break-all text-sm text-[#6B7684]">{email}</p>
+            {profile?.bio && <p className="mt-3 break-words whitespace-pre-wrap text-sm leading-relaxed text-[#4E5968]">{profile.bio}</p>}
           </div>
-        )}
-        <LinkList
-          links={links}
-          onUpdate={async (id, values) => {
-            const updated = await updateLink(id, values);
-            setLinks((current) => current.map((link) => link.id === id ? { ...link, ...updated } : link));
-          }}
-          onDelete={async (id) => {
-            await deleteLink(id);
-            setLinks((current) => current.filter((link) => link.id !== id));
-          }}
-          isLoading={isLoadingLinks || isSavingLink}
-          showSkeleton={isLoadingLinks && !hasLoadedLinks}
-          action={<AddLinkDialog onAdd={handleAddLink} disabled={isLoadingLinks || Boolean(linksError)} />}
-        />
-
-        {/* Contact Banner Card */}
-        <Card className="w-full bg-white rounded-[20px] border border-[#E5E8EB]/70 p-5 ring-0 shadow-none flex flex-row items-center justify-between gap-3 mt-1">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-10 h-10 rounded-full bg-[#E8F3FF] text-[#3182F6] flex items-center justify-center shrink-0">
-              <Sparkles className="w-5 h-5" />
-            </div>
-            <div className="min-w-0">
-              <h3 className="text-[15px] font-semibold text-[#191F28] truncate">
-                협업이나 문의가 있으신가요?
-              </h3>
-              <p className="text-[13px] text-[#8B95A1] truncate">
-                언제든지 편하게 메일을 남겨주세요
-              </p>
-            </div>
-          </div>
-          <a
-            href="mailto:alex.lee.dev@example.com"
-            className="h-9 px-3.5 rounded-[10px] bg-[#F2F4F6] text-[#191F28] hover:bg-[#E5E8EB] active:bg-[#D1D6DB] text-[13px] font-semibold flex items-center justify-center shrink-0 transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98]"
-          >
-            메일 보내기
-          </a>
-        </Card>
-
-        {/* Footer */}
-        <footer className="text-center pt-8 pb-4 text-[12px] text-[#8B95A1]">
-          <p>© {new Date().getFullYear()} {profile.name} · My Link</p>
-        </footer>
-      </main>
-
-      {/* Bottom CTA (56pt single primary action with protective gradient) */}
-      <div className="fixed bottom-0 left-0 right-0 z-40 flex justify-center pointer-events-none">
-        <div className="w-full max-w-[460px] px-4 pb-5 pt-6 bg-gradient-to-t from-[#F2F4F6] via-[#F2F4F6]/95 to-transparent pointer-events-auto">
-          <Button
-            onClick={handleShare}
-            className="w-full h-[56px] rounded-[16px] bg-[#3182F6] text-white text-[17px] font-bold shadow-tds-cta hover:bg-[#2B72D6] active:bg-[#1B64CE] transition-[transform,background-color] duration-[120ms] ease-tds active:scale-[0.98] cursor-pointer flex items-center justify-center gap-2"
-          >
-            <span>프로필 링크 복사하기</span>
-          </Button>
-        </div>
-      </div>
-
-      {/* Toast Notification */}
-      <Toast
-        message={toastMessage}
-        isOpen={showToast}
-        onClose={() => setShowToast(false)}
+        </CardContent>
+      </Card>
+      {profile && <>
+        <Button variant="outline" disabled={loading || Boolean(error)} onClick={() => setEditingProfile(true)} className="self-end rounded-[12px] border-[#E5E8EB] bg-white">프로필 수정</Button>
+        <EditProfileDialog uid={user.uid} profile={profile} open={editingProfile} onOpenChange={setEditingProfile} />
+      </>}
+      {error && <div role="alert" className="space-y-2 text-sm text-[#F04452]"><p>{error}</p><Button variant="outline" onClick={() => { void linksQuery.refetch(); void profileQuery.refetch(); }}>다시 불러오기</Button></div>}
+      <LinkList
+        title="내 링크"
+        links={links}
+        isLoading={linksQuery.isFetching || profileQuery.isFetching || saving}
+        showSkeleton={linksQuery.isPending}
+        action={<AddLinkDialog onAdd={async (values) => { await add.mutateAsync(values); }} disabled={loading || Boolean(error)} />}
+        onUpdate={async (id, values) => { await update.mutateAsync({ id, values }); }}
+        onDelete={async (id) => { await remove.mutateAsync(id); }}
       />
+      {!loading && !error && links.length === 0 && <Card className="rounded-[20px] bg-white p-6 text-center shadow-none ring-0"><LinkIcon aria-hidden="true" className="mx-auto mb-3 size-7 text-[#3182F6]" /><h2 className="font-semibold">아직 등록한 링크가 없어요</h2><p className="mt-2 text-sm leading-relaxed text-[#6B7684]">새 링크 추가 버튼으로 나만의 링크 목록을 만들어 보세요.</p></Card>}
+    </>
+  );
+}
+
+export default function Home() {
+  const { user, loading, error: authError } = useAuth();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [summary, setSummary] = useState<ProfileSummary | null>(null);
+  const [editRequest, setEditRequest] = useState<{ uid: string; sequence: number } | null>(null);
+
+  async function authenticate() {
+    setBusy(true);
+    setError("");
+    try { if (user) await logOut(); else await signInWithGoogle(); }
+    catch (cause) {
+      const code = cause instanceof FirebaseError ? cause.code : "";
+      if (code !== "auth/popup-closed-by-user" && code !== "auth/cancelled-popup-request") {
+        setError(code === "auth/popup-blocked" ? "로그인 팝업이 차단됐어요. 팝업을 허용한 뒤 다시 시도해 주세요." : code === "auth/operation-not-allowed" || code === "auth/configuration-not-found" ? "Google 로그인이 설정되지 않았어요. Firebase Authentication의 Google 제공업체를 활성화해 주세요." : code === "auth/unauthorized-domain" ? "로그인 허용 도메인이 아니에요. Firebase Authentication의 승인된 도메인에 현재 도메인을 추가해 주세요." : "로그인 상태를 변경하지 못했어요. 연결 상태를 확인하고 다시 시도해 주세요.");
+      }
+    } finally { setBusy(false); }
+  }
+
+  const pageHref = user && summary?.uid === user.uid && summary.profile ? `/${encodeURIComponent(summary.profile.displayName)}` : undefined;
+
+  const loginButton = (header = false) => (
+    <Button onClick={authenticate} disabled={busy || loading || Boolean(authError)} className={`${header ? "h-10 rounded-[12px] text-sm" : "h-12 w-full rounded-[14px]"} bg-[#3182F6] font-semibold text-white hover:bg-[#1B64CE]`}>
+      {busy ? <LoaderCircle aria-hidden="true" className="size-4 motion-safe:animate-spin" /> : user ? <LogOut aria-hidden="true" /> : <LogIn aria-hidden="true" />}
+      {busy ? "처리 중…" : user ? "로그아웃" : "Google로 로그인"}
+    </Button>
+  );
+
+  return (
+    <div className="min-h-screen bg-[#F2F4F6] text-[#191F28]">
+      <header className="sticky top-0 z-30 mx-auto flex h-16 w-full max-w-[460px] items-center justify-between gap-3 bg-[#F2F4F6]/95 px-5 backdrop-blur-md">
+        <Link href="/" className="shrink-0 text-[17px] font-bold tracking-tight">마이링크</Link>
+        {pageHref && <Link href={pageHref} className="ml-auto shrink-0 text-sm font-semibold text-[#3182F6]">내 페이지</Link>}
+        {user ? <ProfileMenu
+          key={user.uid}
+          pageHref={pageHref}
+          profile={summary?.uid === user.uid && summary.profile ? summary.profile : { displayName: user.email?.split("@")[0] || "마이링크 사용자", email: user.email ?? "", photoURL: user.photoURL ?? "", bio: "" }}
+          linkCount={summary?.uid === user.uid ? summary.linkCount : null}
+          busy={busy}
+          onLogout={authenticate}
+          canEdit={summary?.uid === user.uid && Boolean(summary.profile)}
+          onEdit={() => setEditRequest((current) => ({ uid: user.uid, sequence: current?.uid === user.uid ? current.sequence + 1 : 1 }))}
+        /> : loginButton(true)}
+      </header>
+      <main className="mx-auto flex w-full max-w-[460px] flex-col gap-4 px-4 pt-2 pb-12 sm:px-5">
+        {(authError || error) && <p role="alert" className="rounded-[14px] bg-white p-4 text-sm text-[#F04452]">{authError || error}</p>}
+        {loading ? <div role="status" className="flex items-center justify-center gap-2 py-20 text-sm text-[#6B7684]"><LoaderCircle aria-hidden="true" className="size-5 motion-safe:animate-spin" />로그인 상태를 확인하고 있어요…</div> : user ? <UserWorkspace key={user.uid} user={user} onSummaryChange={setSummary} editRequest={editRequest?.uid === user.uid ? editRequest.sequence : 0} /> : (
+          <Card className="rounded-[24px] border border-[#E5E8EB] bg-white p-0 shadow-none ring-0">
+            <CardContent className="flex flex-col gap-5 p-7">
+              <span className="flex size-14 items-center justify-center rounded-[18px] bg-[#E8F3FF] text-[#3182F6]"><LinkIcon aria-hidden="true" className="size-7" /></span>
+              <h1 className="text-2xl leading-snug font-bold tracking-tight">나만의 링크를<br />한곳에 모아 보세요</h1>
+              <p className="text-[15px] leading-relaxed text-[#4E5968]">Google 계정으로 로그인한 후 링크를 추가하고 수정·삭제할 수 있어요. 로그인하면 내 프로필과 계정에 저장된 링크가 표시돼요.</p>
+              {loginButton()}
+            </CardContent>
+          </Card>
+        )}
+        <footer className="pt-6 text-center text-xs text-[#8B95A1]">© {new Date().getFullYear()} My Link</footer>
+      </main>
     </div>
   );
 }
