@@ -14,6 +14,7 @@ import LinkList from "@/components/LinkList";
 import AddLinkDialog from "@/components/AddLinkDialog";
 import ProfileMenu from "@/components/ProfileMenu";
 import EditProfileDialog from "@/components/EditProfileDialog";
+import LandingPage from "@/components/LandingPage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -101,6 +102,8 @@ export default function Home() {
     </Button>
   );
 
+  if (!loading && !user) return <LandingPage onLogin={authenticate} busy={busy} disabled={busy || Boolean(authError)} error={authError || error} />;
+
   return (
     <div className="min-h-screen bg-[#F2F4F6] text-[#191F28]">
       <header className="sticky top-0 z-30 mx-auto flex h-16 w-full max-w-[460px] items-center justify-between gap-3 bg-[#F2F4F6]/95 px-5 backdrop-blur-md">
@@ -119,16 +122,7 @@ export default function Home() {
       </header>
       <main className="mx-auto flex w-full max-w-[460px] flex-col gap-4 px-4 pt-2 pb-12 sm:px-5">
         {(authError || error) && <p role="alert" className="rounded-[14px] bg-white p-4 text-sm text-[#F04452]">{authError || error}</p>}
-        {loading ? <div role="status" className="flex items-center justify-center gap-2 py-20 text-sm text-[#6B7684]"><LoaderCircle aria-hidden="true" className="size-5 motion-safe:animate-spin" />로그인 상태를 확인하고 있어요…</div> : user ? <UserWorkspace key={user.uid} user={user} onSummaryChange={setSummary} editRequest={editRequest?.uid === user.uid ? editRequest.sequence : 0} /> : (
-          <Card className="rounded-[24px] border border-[#E5E8EB] bg-white p-0 shadow-none ring-0">
-            <CardContent className="flex flex-col gap-5 p-7">
-              <span className="flex size-14 items-center justify-center rounded-[18px] bg-[#E8F3FF] text-[#3182F6]"><LinkIcon aria-hidden="true" className="size-7" /></span>
-              <h1 className="text-2xl leading-snug font-bold tracking-tight">나만의 링크를<br />한곳에 모아 보세요</h1>
-              <p className="text-[15px] leading-relaxed text-[#4E5968]">Google 계정으로 로그인한 후 링크를 추가하고 수정·삭제할 수 있어요. 로그인하면 내 프로필과 계정에 저장된 링크가 표시돼요.</p>
-              {loginButton()}
-            </CardContent>
-          </Card>
-        )}
+        {loading ? <div role="status" className="flex items-center justify-center gap-2 py-20 text-sm text-[#6B7684]"><LoaderCircle aria-hidden="true" className="size-5 motion-safe:animate-spin" />로그인 상태를 확인하고 있어요…</div> : user ? <UserWorkspace key={user.uid} user={user} onSummaryChange={setSummary} editRequest={editRequest?.uid === user.uid ? editRequest.sequence : 0} /> : null}
         <footer className="pt-6 text-center text-xs text-[#8B95A1]">© {new Date().getFullYear()} My Link</footer>
       </main>
     </div>
